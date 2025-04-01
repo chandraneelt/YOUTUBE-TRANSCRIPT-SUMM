@@ -1,0 +1,114 @@
+# Step 1: Import required libraries
+from googleapiclient.discovery import build
+import csv
+
+# Step 2: Set up your API key
+API_KEY = 'AIzaSyAT-sSC5zIljR_H3tpEpE5ZHFTLfOaQ-Rc'  # Replace with your API Key
+VIDEO_ID = 'oO8w6XcXJUs'  # Replace with the video ID for the video you want to extract comments from
+
+# Step 3: Build the YouTube API service
+youtube = build('youtube', 'v3', developerKey=API_KEY)
+
+# Step 4: Function to get YouTube comments
+def get_video_comments(video_id):
+    comments = []
+    response = youtube.commentThreads().list(
+        part='snippet',
+        videoId=video_id,
+        maxResults=100,  # You can change the limit here
+        textFormat='plainText'
+    ).execute()
+
+    while response:
+        for item in response['items']:
+            comment = item['snippet']['topLevelComment']['snippet']['textDisplay']
+            comments.append(comment)
+
+        # Check if there are more comments to retrieve
+        if 'nextPageToken' in response:
+            response = youtube.commentThreads().list(
+                part='snippet',
+                videoId=video_id,
+                pageToken=response['nextPageToken'],
+                maxResults=100,
+                textFormat='plainText'
+            ).execute()
+        else:
+            break
+
+    filename = video_id + '.csv'
+    with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(['Comment'])
+        for comment in comments:
+            writer.writerow([comment])
+
+    return filename
+
+# Step 5: Fetch comments
+video_comments_file = get_video_comments(VIDEO_ID)
+
+# Step 6: Print the saved file name
+print(f"Comments saved to {video_comments_file}")
+
+pip install pandas nltk textblob matplotlib wordcloud
+
+import pandas as pd
+from textblob import TextBlob
+import matplotlib.pyplot as plt
+from wordcloud import WordCloud
+import nltk
+from nltk.corpus import stopwords
+
+nltk.download('stopwords')
+
+
+comments_df = pd.read_csv("oO8w6XcXJUs.csv")
+
+# Check the first few rows of the dataset
+print(comments_df.head())
+
+# Step 2: Preprocessing the comments (convert to lowercase, remove stop words)
+# Step 2: Preprocessing the comments (convert to lowercase, remove stop words)
+stop_words = set(stopwords.words('english'))
+
+def preprocess_comment(comment):
+    # Check if the comment is a string
+    if isinstance(comment, str):
+        words = comment.lower().split()
+        filtered_words = [word for word in words if word not in stop_words]
+        return ' '.join(filtered_words)
+    else:
+        return ""
+
+comments_df['processed_comment'] = comments_df['Comment'].apply(preprocess_comment)
+
+print(comments_df.head())
+
+def get_sentiment(comment):
+    analysis = TextBlob(comment)
+    return analysis.sentiment.polarity  # Returns a value between -1 and 1
+
+# Apply sentiment analysis on processed comments
+comments_df['sentiment'] = comments_df['processed_comment'].apply(get_sentiment)
+
+# Print sample sentiment values
+print(comments_df[['processed_comment', 'sentiment']].head())
+
+# Plot the distribution of sentiment values
+plt.hist(comments_df['sentiment'], bins=20, color='blue')
+plt.title('Sentiment Analysis of YouTube Comments')
+plt.xlabel('Sentiment Polarity')
+plt.ylabel('Number of Comments')
+plt.show()
+
+
+# Step 4: Word Frequency Analysis
+all_comments = ' '.join(comments_df['processed_comment'])
+wordcloud = WordCloud(width=800, height=400, background_color='white').generate(all_comments)
+
+# Display the word cloud
+plt.figure(figsize=(10, 5))
+plt.imshow(wordcloud, interpolation='bilinear')
+plt.axis('off')
+plt.show()
