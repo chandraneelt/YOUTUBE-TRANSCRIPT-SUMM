@@ -2,14 +2,17 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/hello.py",
+      "src": "api/main.py",
       "use": "@vercel/python"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "api/hello.py"
+      "dest": "api/main.py"
     }
-  ]
+  ],
+  "env": {
+    "YOUTUBE_API_KEY": "AIzaSyDQ4NxC8HNXhb_kPZAoYjK79nvFriHNj9Y"
+  }
 }
