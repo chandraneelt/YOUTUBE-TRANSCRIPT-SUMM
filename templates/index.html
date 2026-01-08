@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 YouTube Comment Analyzer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .loading {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-red-600 mb-2">📊 YouTube Comment Analyzer</h1>
+            <p class="text-gray-600">Analyze YouTube video comments with AI-powered sentiment analysis</p>
+        </div>
+
+        <!-- Input Form -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">
+                    YouTube Video URL or ID
+                </label>
+                <input 
+                    type="text" 
+                    id="videoUrl" 
+                    placeholder="https://www.youtube.com/watch?v=VIDEO_ID or just VIDEO_ID"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                >
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">
+                    Maximum Comments to Analyze
+                </label>
+                <select id="maxComments" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
+                    <option value="100">100 comments</option>
+                    <option value="500">500 comments</option>
+                    <option value="1000" selected>1000 comments</option>
+                    <option value="2000">2000 comments</option>
+                </select>
+            </div>
+            
+            <button 
+                onclick="analyzeComments()" 
+                class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-md transition duration-200"
+                id="analyzeBtn"
+            >
+                🚀 Analyze Comments
+            </button>
+        </div>
+
+        <!-- Loading -->
+        <div id="loading" class="hidden text-center py-8">
+            <div class="loading mx-auto mb-4"></div>
+            <p class="text-gray-600">Analyzing comments... This may take a few moments.</p>
+        </div>
+
+        <!-- Results -->
+        <div id="results" class="hidden">
+            <!-- Statistics -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-2xl font-bold mb-4">📈 Analysis Results</h2>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="stats">
+                    <!-- Stats will be populated here -->
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-xl font-bold mb-4">Sentiment Distribution</h3>
+                    <img id="pieChart" class="w-full" alt="Sentiment Distribution">
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-xl font-bold mb-4">Sentiment Histogram</h3>
+                    <img id="histogram" class="w-full" alt="Sentiment Histogram">
+                </div>
+            </div>
+
+            <!-- Word Cloud -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h3 class="text-xl font-bold mb-4">☁️ Word Cloud</h3>
+                <img id="wordcloud" class="w-full" alt="Word Cloud">
+            </div>
+
+            <!-- Sample Comments -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-xl font-bold mb-4">📋 Sample Comments</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full table-auto">
+                        <thead>
+                            <tr class="bg-gray-50">
+                                <th class="px-4 py-2 text-left">Comment</th>
+                                <th class="px-4 py-2 text-left">Author</th>
+                                <th class="px-4 py-2 text-left">Likes</th>
+                                <th class="px-4 py-2 text-left">Sentiment</th>
+                            </tr>
+                        </thead>
+                        <tbody id="commentsTable">
+                            <!-- Comments will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error -->
+        <div id="error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <span id="errorMessage"></span>
+        </div>
+    </div>
+
+    <script>
+        async function analyzeComments() {
+            const videoUrl = document.getElementById('videoUrl').value;
+            const maxComments = parseInt(document.getElementById('maxComments').value);
+            
+            if (!videoUrl.trim()) {
+                showError('Please enter a YouTube video URL or ID');
+                return;
+            }
+            
+            // Show loading
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('results').classList.add('hidden');
+            document.getElementById('error').classList.add('hidden');
+            document.getElementById('analyzeBtn').disabled = true;
+            document.getElementById('analyzeBtn').textContent = 'Analyzing...';
+            
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        video_url: videoUrl,
+                        max_comments: maxComments
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Analysis failed');
+                }
+                
+                displayResults(data);
+                
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('analyzeBtn').disabled = false;
+                document.getElementById('analyzeBtn').textContent = '🚀 Analyze Comments';
+            }
+        }
+        
+        function displayResults(data) {
+            // Show results section
+            document.getElementById('results').classList.remove('hidden');
+            
+            // Display statistics
+            const statsHtml = `
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-blue-600">${data.total_comments}</div>
+                    <div class="text-sm text-gray-600">Total Comments</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-green-600">${data.sentiment_counts.Positive || 0}</div>
+                    <div class="text-sm text-gray-600">Positive</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-gray-600">${data.sentiment_counts.Neutral || 0}</div>
+                    <div class="text-sm text-gray-600">Neutral</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-red-600">${data.sentiment_counts.Negative || 0}</div>
+                    <div class="text-sm text-gray-600">Negative</div>
+                </div>
+            `;
+            document.getElementById('stats').innerHTML = statsHtml;
+            
+            // Display charts
+            if (data.charts.pie_chart) {
+                document.getElementById('pieChart').src = 'data:image/png;base64,' + data.charts.pie_chart;
+            }
+            if (data.charts.histogram) {
+                document.getElementById('histogram').src = 'data:image/png;base64,' + data.charts.histogram;
+            }
+            if (data.charts.wordcloud) {
+                document.getElementById('wordcloud').src = 'data:image/png;base64,' + data.charts.wordcloud;
+            }
+            
+            // Display sample comments
+            const commentsHtml = data.sample_comments.map(comment => `
+                <tr class="border-b">
+                    <td class="px-4 py-2 max-w-xs truncate">${comment.Comment}</td>
+                    <td class="px-4 py-2">${comment.Author}</td>
+                    <td class="px-4 py-2">${comment.Likes}</td>
+                    <td class="px-4 py-2">
+                        <span class="px-2 py-1 rounded text-xs ${getSentimentColor(comment.sentiment_category)}">
+                            ${comment.sentiment_category}
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+            document.getElementById('commentsTable').innerHTML = commentsHtml;
+        }
+        
+        function getSentimentColor(sentiment) {
+            switch(sentiment) {
+                case 'Positive': return 'bg-green-100 text-green-800';
+                case 'Negative': return 'bg-red-100 text-red-800';
+                default: return 'bg-gray-100 text-gray-800';
+            }
+        }
+        
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('error').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
