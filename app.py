@@ -17,6 +17,10 @@ from sentiment_analysis import (
     generate_wordcloud
 )
 from config import API_KEY, MAX_COMMENTS
+import os
+
+# Use environment variable for API key in production, fallback to config
+api_key_default = os.getenv("YOUTUBE_API_KEY", API_KEY)
 
 # Page configuration
 st.set_page_config(
@@ -55,7 +59,7 @@ with st.sidebar:
     # API Key input
     api_key = st.text_input(
         "YouTube Data API Key",
-        value=API_KEY if API_KEY != "YOUR_API_KEY" else "",
+        value=api_key_default if api_key_default != "YOUR_API_KEY" else "",
         type="password",
         help="Get your API key from Google Cloud Console"
     )

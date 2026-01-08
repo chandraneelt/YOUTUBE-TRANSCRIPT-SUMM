@@ -29,7 +29,6 @@ wheels/
 *.jpg
 *.jpeg
 *.gif
-config.py
 
 # IDE
 .vscode/
@@ -45,4 +44,7 @@ config.py
 # OS
 .DS_Store
 Thumbs.db
+
+# Streamlit secrets (keep local only)
+.streamlit/secrets.toml
 
