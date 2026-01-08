@@ -24,46 +24,103 @@ class handler(BaseHTTPRequestHandler):
         
         html = """
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>YouTube Comment Analyzer</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 YouTube Comment Analyzer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-gray-100 p-8">
-    <div class="max-w-4xl mx-auto">
-        <h1 class="text-4xl font-bold text-center mb-8 text-red-600">📊 YouTube Comment Analyzer</h1>
+<body class="bg-gradient-to-br from-red-50 to-blue-50 min-h-screen">
+    <div class="max-w-6xl mx-auto p-6">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-5xl font-bold bg-gradient-to-r from-red-600 to-blue-600 bg-clip-text text-transparent mb-4">
+                📊 YouTube Comment Analyzer
+            </h1>
+            <p class="text-gray-600 text-lg">AI-powered sentiment analysis for YouTube comments</p>
+            <div class="mt-4 flex justify-center flex-wrap gap-4 text-sm text-gray-500">
+                <span class="bg-white px-3 py-1 rounded-full">✅ Real-time Analysis</span>
+                <span class="bg-white px-3 py-1 rounded-full">✅ Sentiment Detection</span>
+                <span class="bg-white px-3 py-1 rounded-full">✅ Interactive Charts</span>
+            </div>
+        </div>
         
-        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
-            <input type="text" id="videoUrl" placeholder="YouTube Video URL" 
-                   class="w-full p-3 border rounded mb-4">
-            <select id="maxComments" class="w-full p-3 border rounded mb-4">
-                <option value="50">50 comments</option>
-                <option value="100">100 comments</option>
-            </select>
-            <button onclick="analyze()" class="w-full bg-red-600 text-white p-3 rounded hover:bg-red-700">
-                Analyze Comments
+        <!-- Input Form -->
+        <div class="bg-white p-8 rounded-xl shadow-lg mb-8 border border-gray-200">
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-3">🎥 YouTube Video URL</label>
+                    <input type="text" id="videoUrl" 
+                           placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ" 
+                           class="w-full p-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition duration-200">
+                    <p class="text-xs text-gray-500 mt-2">💡 Paste any YouTube video URL or just the video ID</p>
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-3">📊 Max Comments</label>
+                    <select id="maxComments" class="w-full p-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                        <option value="50">50 comments (Fast ⚡)</option>
+                        <option value="100" selected>100 comments (Recommended 👍)</option>
+                        <option value="200">200 comments (Detailed 🔍)</option>
+                    </select>
+                </div>
+            </div>
+            <button onclick="analyze()" id="analyzeBtn"
+                    class="w-full mt-6 bg-gradient-to-r from-red-600 to-blue-600 hover:from-red-700 hover:to-blue-700 text-white font-bold py-4 px-6 rounded-lg transition duration-200 transform hover:scale-105 shadow-lg">
+                🚀 Analyze Comments
             </button>
         </div>
         
-        <div id="loading" class="hidden text-center">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
-            <p class="mt-4">Analyzing...</p>
+        <!-- Loading -->
+        <div id="loading" class="hidden text-center py-12">
+            <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-red-600 mx-auto mb-6"></div>
+            <p class="text-gray-600 text-xl font-semibold">🔍 Analyzing comments...</p>
+            <p class="text-gray-500 mt-2">This may take a few moments</p>
         </div>
         
-        <div id="results" class="hidden bg-white p-6 rounded-lg shadow-md">
-            <h2 class="text-2xl font-bold mb-4">Results</h2>
-            <div id="stats" class="grid grid-cols-4 gap-4 mb-6"></div>
-            <canvas id="chart" width="400" height="200"></canvas>
-            <div id="comments" class="mt-6"></div>
+        <!-- Results -->
+        <div id="results" class="hidden space-y-8">
+            <!-- Statistics -->
+            <div class="bg-white p-8 rounded-xl shadow-lg border border-gray-200">
+                <h2 class="text-3xl font-bold mb-6 text-gray-800">📈 Analysis Results</h2>
+                <div id="stats" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+            </div>
+            
+            <!-- Chart -->
+            <div class="bg-white p-8 rounded-xl shadow-lg border border-gray-200">
+                <h3 class="text-2xl font-bold mb-6 text-gray-800">📊 Sentiment Distribution</h3>
+                <div class="relative h-80 flex justify-center">
+                    <canvas id="chart" class="max-w-md"></canvas>
+                </div>
+            </div>
+            
+            <!-- Comments -->
+            <div class="bg-white p-8 rounded-xl shadow-lg border border-gray-200">
+                <h3 class="text-2xl font-bold mb-6 text-gray-800">💬 Sample Comments</h3>
+                <div id="comments" class="space-y-3"></div>
+            </div>
         </div>
         
-        <div id="error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-            <span id="errorMsg"></span>
+        <!-- Error -->
+        <div id="error" class="hidden bg-red-50 border-2 border-red-200 text-red-800 px-6 py-4 rounded-xl shadow-lg">
+            <div class="flex items-center">
+                <span class="text-2xl mr-3">❌</span>
+                <span id="errorMsg" class="font-medium"></span>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="text-center mt-12 text-gray-500 text-sm">
+            <p class="bg-white px-4 py-2 rounded-full inline-block shadow-sm">
+                Built with ❤️ using Python + Vercel | Powered by YouTube Data API
+            </p>
         </div>
     </div>
 
     <script>
+        let currentChart = null;
+        
         async function analyze() {
             const url = document.getElementById('videoUrl').value;
             const max = document.getElementById('maxComments').value;
@@ -74,6 +131,7 @@ class handler(BaseHTTPRequestHandler):
             }
             
             showLoading(true);
+            hideError();
             
             try {
                 const response = await fetch('/analyze', {
@@ -101,44 +159,111 @@ class handler(BaseHTTPRequestHandler):
             
             // Stats
             document.getElementById('stats').innerHTML = `
-                <div class="text-center"><div class="text-2xl font-bold">${data.total_comments}</div><div>Total</div></div>
-                <div class="text-center"><div class="text-2xl font-bold text-green-600">${data.sentiment_counts.Positive || 0}</div><div>Positive</div></div>
-                <div class="text-center"><div class="text-2xl font-bold text-gray-600">${data.sentiment_counts.Neutral || 0}</div><div>Neutral</div></div>
-                <div class="text-center"><div class="text-2xl font-bold text-red-600">${data.sentiment_counts.Negative || 0}</div><div>Negative</div></div>
+                <div class="text-center bg-blue-50 p-4 rounded"><div class="text-2xl font-bold text-blue-600">${data.total_comments}</div><div class="text-sm text-blue-800">Total</div></div>
+                <div class="text-center bg-green-50 p-4 rounded"><div class="text-2xl font-bold text-green-600">${data.sentiment_counts.Positive || 0}</div><div class="text-sm text-green-800">Positive</div></div>
+                <div class="text-center bg-gray-50 p-4 rounded"><div class="text-2xl font-bold text-gray-600">${data.sentiment_counts.Neutral || 0}</div><div class="text-sm text-gray-800">Neutral</div></div>
+                <div class="text-center bg-red-50 p-4 rounded"><div class="text-2xl font-bold text-red-600">${data.sentiment_counts.Negative || 0}</div><div class="text-sm text-red-800">Negative</div></div>
             `;
             
-            // Chart
+            // Destroy existing chart if it exists
+            if (currentChart) {
+                currentChart.destroy();
+                currentChart = null;
+            }
+            
+            // Create new chart
             const ctx = document.getElementById('chart').getContext('2d');
-            new Chart(ctx, {
-                type: 'pie',
+            currentChart = new Chart(ctx, {
+                type: 'doughnut',
                 data: {
-                    labels: ['Positive', 'Neutral', 'Negative'],
+                    labels: ['😊 Positive', '😐 Neutral', '😞 Negative'],
                     datasets: [{
-                        data: [data.sentiment_counts.Positive || 0, data.sentiment_counts.Neutral || 0, data.sentiment_counts.Negative || 0],
-                        backgroundColor: ['#10B981', '#6B7280', '#EF4444']
+                        data: [
+                            data.sentiment_counts.Positive || 0, 
+                            data.sentiment_counts.Neutral || 0, 
+                            data.sentiment_counts.Negative || 0
+                        ],
+                        backgroundColor: ['#10B981', '#6B7280', '#EF4444'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
                     }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                font: { size: 12, weight: 'bold' }
+                            }
+                        }
+                    }
                 }
             });
             
             // Comments
             const commentsHtml = data.sample_comments.map(c => `
-                <div class="border-l-4 border-${c.sentiment_category === 'Positive' ? 'green' : c.sentiment_category === 'Negative' ? 'red' : 'gray'}-500 pl-4 py-2 mb-2">
-                    <p class="text-sm">${c.Comment.substring(0, 200)}...</p>
-                    <div class="text-xs text-gray-500">${c.Author} • ${c.Likes} likes • ${c.sentiment_category}</div>
+                <div class="border-l-4 ${getSentimentBorder(c.sentiment_category)} bg-gray-50 p-3 rounded-r mb-3">
+                    <p class="text-sm text-gray-800 mb-2">${c.Comment.substring(0, 250)}${c.Comment.length > 250 ? '...' : ''}</p>
+                    <div class="flex flex-wrap gap-2 text-xs">
+                        <span class="font-medium text-gray-700">👤 ${c.Author}</span>
+                        <span class="text-gray-500">👍 ${c.Likes} likes</span>
+                        <span class="px-2 py-1 rounded-full ${getSentimentColor(c.sentiment_category)}">
+                            ${getSentimentEmoji(c.sentiment_category)} ${c.sentiment_category}
+                        </span>
+                    </div>
                 </div>
             `).join('');
             document.getElementById('comments').innerHTML = commentsHtml;
         }
         
+        function getSentimentBorder(sentiment) {
+            switch(sentiment) {
+                case 'Positive': return 'border-green-500';
+                case 'Negative': return 'border-red-500';
+                default: return 'border-gray-500';
+            }
+        }
+        
+        function getSentimentColor(sentiment) {
+            switch(sentiment) {
+                case 'Positive': return 'bg-green-100 text-green-800';
+                case 'Negative': return 'bg-red-100 text-red-800';
+                default: return 'bg-gray-100 text-gray-800';
+            }
+        }
+        
+        function getSentimentEmoji(sentiment) {
+            switch(sentiment) {
+                case 'Positive': return '😊';
+                case 'Negative': return '😞';
+                default: return '😐';
+            }
+        }
+        
         function showLoading(show) {
             document.getElementById('loading').classList.toggle('hidden', !show);
-            document.getElementById('results').classList.add('hidden');
+            if (show) {
+                document.getElementById('results').classList.add('hidden');
+            }
         }
         
         function showError(msg) {
             document.getElementById('errorMsg').textContent = msg;
             document.getElementById('error').classList.remove('hidden');
         }
+        
+        function hideError() {
+            document.getElementById('error').classList.add('hidden');
+        }
+        
+        // Allow Enter key to trigger analysis
+        document.getElementById('videoUrl').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                analyze();
+            }
+        });
     </script>
 </body>
 </html>
